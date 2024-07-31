@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# <h1>Table of Contents<span class="tocSkip"></span></h1>
-# <div class="toc"><ul class="toc-item"></ul></div>
-
-# In[1]:
+# In[3]:
 
 
 from datetime import datetime
@@ -13,10 +10,41 @@ import pandas as pd
 from tqdm.notebook import tqdm
 
 
-# In[2]:
+from sqlalchemy.exc import OperationalError
+from sqlalchemy import * 
+from sqlalchemy.orm import *
+
+import re
+
+
+# In[1]:
+
+
+atomize_list = [' en ', ',']
+
+def load_tuples(split_file, nosplit_file):
+    with open(split_file, 'r') as f:
+        split_tuple = tuple(line.strip() for line in f.readlines())
+    with open(nosplit_file, 'r') as f:
+        nosplit_tuple = tuple(line.strip() for line in f.readlines())
+    return split_tuple, nosplit_tuple
+
+def save_tuples(split_tuple, nosplit_tuple, split_file, nosplit_file):
+    with open(split_file, 'w') as f:
+        for item in split_tuple:
+            f.write(f"{item}\n")
+    with open(nosplit_file, 'w') as f:
+        for item in nosplit_tuple:
+            f.write(f"{item}\n")
+
+
+# In[3]:
 
 
 def vali_date(date_string: str) -> bool:
+    if date_string == '-1':  # If a date is not known, the only acceptable value is -1
+        return True
+
     formats = ["%Y", "%Y-%m", "%Y-%m-%d"]
     
     for format_string in formats:
@@ -24,17 +52,14 @@ def vali_date(date_string: str) -> bool:
             datetime.strptime(date_string, format_string)
             return True
         except ValueError:
-            if date_string == '-1': #if a date is not known, the only acceptable value is -1
-                return True
-            else:
-                pass
+            continue  # Try the next format
         except TypeError:
-            pass
+            return False  # date_string is not a string
     
     return False
 
 
-# In[3]:
+# In[4]:
 
 
 def combine_lists(x: list, y: list) -> list:
@@ -51,7 +76,7 @@ def combine_lists(x: list, y: list) -> list:
         return []
 
 
-# In[4]:
+# In[5]:
 
 
 class Person_attribute:
@@ -72,10 +97,33 @@ class Person_attribute:
             self.source = source #string
         else:
             raise ValueError('Please format your source as a string')
+            
+    def split_up_string(self, input_string, exceptions=False):
+        if exceptions:
+            if type(exceptions) is set:
+                if input_string in exceptions:
+                    output = []
+                    output.append(input_string)
+                    return output
+                else:
+                    escaped_substrings = [re.escape(substring) for substring in atomize_list]
+                    pattern = '|'.join(escaped_substrings)
+                    split_result = re.split(pattern, input_string)
+                    split_result = [substring.strip() for substring in split_result]
+                
+            else:
+                raise TypeError('exceptions should be formatted as a set')
+        else:    
+            escaped_substrings = [re.escape(substring) for substring in atomize_list]
+            pattern = '|'.join(escaped_substrings)
+            split_result = re.split(pattern, input_string)
+            split_result = [substring.strip() for substring in split_result]
+    
+        return split_result
         
 
 
-# In[5]:
+# In[6]:
 
 
 class Person_attribute_loc(Person_attribute):
@@ -85,15 +133,16 @@ class Person_attribute_loc(Person_attribute):
             self.location = location
         else:
             raise ValueError('Please format the location as as str')
+            
 
 
-# In[6]:
+# In[7]:
 
 
-class Appellation(Person_attribute):
+class Appellation(Person_attribute_loc):
     #has Person_attribute as parent
-    def __init__(self, annotation, startdate, enddate, source, app_str, app_type):
-        super().__init__(annotation, startdate, enddate, source)
+    def __init__(self, annotation, startdate, enddate, source, app_str, app_type, location):
+        super().__init__(annotation, startdate, enddate, source, location)
         if type(app_str) == str:
             self.app_str = app_str #the appellation string
         else:
@@ -108,7 +157,7 @@ class Appellation(Person_attribute):
         return f"this person was recorded under the {self.app_type} of {self.app_str} in {self.annotation} according to {self.source}"
 
 
-# In[7]:
+# In[2]:
 
 
 class Activity(Person_attribute_loc):
@@ -132,9 +181,31 @@ class Activity(Person_attribute_loc):
             
     def __str__(self) -> str:
         return f"this person was active as a {self.function} in {self.location}, which is a(n) {self.function_type}, for {self.employer} from {self.startdate} to {self.enddate} as noted in {self.source} on {self.annotation}"
+    
+    def atomize(self, atomize_exceptions=False):
+        if atomize_exceptions:
+            split = super().split_up_string(self.function, exceptions=atomize_exceptions)
+        else:
+            split = super().split_up_string(self.function)
+        if len(split) > 1:
+            output = []
+            for x in split:
+                output.append(Activity(self.annotation, self.startdate, self.enddate, self.source, x, self.function_type, self.employer, self.location))
+            return output
+        
+    def atomize_location(self, atomize_exceptions=False):
+        if atomize_exceptions:
+            split = super().split_up_string(self.location, exceptions=atomize_exceptions)
+        else:
+            split = super().split_up_string(self.location)
+        if len(split) > 1:
+            output = []
+            for x in split:
+                output.append(Activity(self.annotation, self.startdate, self.enddate, self.source, self.function, self.function_type, self.employer, x))
+            return output
 
 
-# In[8]:
+# In[9]:
 
 
 class Identity(Person_attribute_loc):
@@ -156,7 +227,7 @@ class Identity(Person_attribute_loc):
         return f"this person was identified as {self.identifier}, a {self.identity_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
 
 
-# In[9]:
+# In[10]:
 
 
 class Status(Person_attribute_loc):
@@ -178,7 +249,7 @@ class Status(Person_attribute_loc):
         return f"this person held the status of {self.stat}, a {self.status_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
 
 
-# In[10]:
+# In[11]:
 
 
 class Location_Relation(Person_attribute_loc):
@@ -195,7 +266,7 @@ class Location_Relation(Person_attribute_loc):
         return f"this person had a relation of {self.location_relation} to {self.location} from {self.startdate} to {self.enddate}, according to {self.source} recorded on {self.annotation}"
 
 
-# In[11]:
+# In[12]:
 
 
 class Relationship(Person_attribute):
@@ -217,7 +288,7 @@ class Relationship(Person_attribute):
         return f"this person had a relationship of {self.relation} to {self.otherPerson} from {self.startdate} to {self.enddate}, according to {self.source} recorded on {self.annotation}"
 
 
-# In[1]:
+# In[19]:
 
 
 class Person:
@@ -356,9 +427,50 @@ class Person:
             
         else:
             raise TypeError('Unsupported operand type for +')
+            
+    def atomize_functions(self, a_exceptions=False):
+        if len(self.active_as) < 1:
+            print('There is no active as for this person.')
+        else:
+            if a_exceptions:
+                for act in self.active_as:
+                    x = act.atomize(atomize_exceptions=a_exceptions)
+                    if x:
+                        for y in x:
+                            self.active_as.append(y)
+                        self.active_as.remove(act)
+                        
+            else:
+                for act in self.active_as:
+                    x = act.atomize()
+                    if x:
+                        for y in x:
+                            self.active_as.append(y)
+                        self.active_as.remove(act)
+                    
+                    
+    def atomize_function_locations(self, a_exceptions=False):
+        if len(self.active_as) < 1:
+            print('There is no active as for this person.')
+        else:
+            if a_exceptions:
+                for act in self.active_as:
+                    x = act.atomize_location(atomize_exceptions=a_exceptions)
+                    if x:
+                        for y in x:
+                            self.active_as.append(y)
+                        self.active_as.remove(act)
+                        
+            else:
+                for act in self.active_as:
+                    x = act.atomize_location()
+                    if x:
+                        for y in x:
+                            self.active_as.append(y)
+                        self.active_as.remove(act)
 
 
-# In[13]:
+# In[4]:
 
 
 class Personlist:
@@ -376,6 +488,20 @@ class Personlist:
         # Helper function to merge two lists and remove duplicates
         unique_items = set(list1) | set(list2)
         return list(unique_items)
+    
+    def atomize_functions_list(self, use_exceptions=False):
+        for p in self.persons:
+            if use_exceptions:
+                p.atomize_functions(a_exceptions=use_exceptions)
+            else:
+                p.atomize_functions()
+            
+    def atomize_function_locations_list(self, use_exceptions=False):
+        for p in self.persons:
+            if use_exceptions:
+                p.atomize_function_locations(a_exceptions=use_exceptions)
+            else:
+                p.atomize_function_locations()
 
     def merge_on_uri(self) -> List[Person]:
         output = []
@@ -411,8 +537,8 @@ class Personlist:
             appellationsFrame = []
             for p in self.persons:
                 for a in p.appellations:
-                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.source])
-            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'AnnotationDate', 'Startdate', 'Enddate', 'Source'])
+                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location, a.source])
+            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'AnnotationDate', 'Startdate', 'Enddate', 'Location', 'Source'])
         if makeActive_as:
             activeAsFrame = []
             for p in self.persons:
@@ -457,8 +583,8 @@ class Personlist:
             appellationsFrame = []
             for p in self.persons:
                 for a in p.appellations:
-                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.source])
-            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'AnnotationDate', 'Startdate', 'Enddate', 'Source'])
+                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location,a.source])
+            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'Location', 'AnnotationDate', 'Startdate', 'Enddate', 'Source'])
         if makeActive_as:
             activeAsFrame = []
             for p in self.persons:
@@ -492,6 +618,195 @@ class Personlist:
            
         
         return overviewFrame.to_csv('overview.csv'), appellationsFrame.to_csv('appellations.csv'), activeAsFrame.to_csv('activities.csv'), identifiedAsFrame.to_csv('identities.csv'), statusFrame.to_csv('status.csv'), locationRelationFrame.to_csv('locationRelations.csv'), relationFrame.to_csv('relationships.csv')
+    
+    def update_db(self, db, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True):
+    
+        #create engine
+        engine = create_engine(f'sqlite:///{db}')
+        metadata = MetaData(f'sqlite:///{db}')
+
+        #copy the .schema into the metadata
+        metadata.reflect(bind=engine)
+
+        #create a session with autoflush off
+        Session = sessionmaker(bind=engine, autoflush=False)
+        session = Session()
+
+        #for each table, check if it needs to be constructed
+        if makeOverview:
+            #if so, connect the table to a variable
+            overview_table = metadata.tables['persons']
+
+            #create an empty object to bind to the table
+            class Overview_sql(object): pass
+
+            #map table to object
+            mapper(Overview_sql, overview_table)
+
+            for p in tqdm(self.persons):
+                for p in self.persons:
+                    new_overview_sql = Overview_sql()
+                    new_overview_sql.URI = p.URI
+                    session.merge(new_overview_sql)
+
+        if makeAppellations:
+            #if so, connect the table to a variable
+            appellation_table = metadata.tables['appellations']
+
+            #create an empty object to bind to the table
+            class Appellation_sql(object): pass
+
+            #map table to object
+            mapper(Appellation_sql, appellation_table)
+
+            for p in tqdm(self.persons):
+                for a in p.appellations:
+                    new_appellation_sql = Appellation_sql()
+                    new_appellation_sql.URI = p.URI
+                    new_appellation_sql.appellation = a.app_str
+                    new_appellation_sql.appellationType = a.app_type 
+                    new_appellation_sql.annotationDate = a.annotation
+                    new_appellation_sql.startDate = a.startdate
+                    new_appellation_sql.endDate = a.enddate
+                    new_appellation_sql.location = a.location
+                    new_appellation_sql.source = a.source
+
+                    session.merge(new_appellation_sql)
+
+        if makeActive_as:
+            #if so, connect the table to a variable
+            activeAs_table = metadata.tables['activeAs']
+
+            #create an empty object to bind to the table
+            class activeAs_sql(object): pass
+
+            #map table to object
+            mapper(activeAs_sql, activeAs_table)
+
+            for p in tqdm(self.persons):
+                for a in p.active_as:
+                    new_activeAs_sql = activeAs_sql()
+                    new_activeAs_sql.URI = p.URI
+                    new_activeAs_sql.activity = a.function
+                    new_activeAs_sql.activityType = a.function_type 
+                    new_activeAs_sql.employer = a.employer
+                    new_activeAs_sql.annotationDate = a.annotation
+                    new_activeAs_sql.startDate = a.startdate
+                    new_activeAs_sql.endDate = a.enddate
+                    new_activeAs_sql.location = a.location
+                    new_activeAs_sql.source = a.source
+
+                    session.merge(new_activeAs_sql)
+
+
+        if makeIdentified_as:
+            #if so, connect the table to a variable
+            identities_table = metadata.tables['identities']
+
+            #create an empty object to bind to the table
+            class Identity_sql(object): pass
+
+            #map table to object
+            mapper(Identity_sql, identities_table)
+
+            for p in tqdm(self.persons):
+                for a in p.identified_as:
+                    new_Identity_sql = Identity_sql()
+                    new_Identity_sql.URI = p.URI
+                    new_Identity_sql.identity = a.identifier
+                    new_Identity_sql.identityType = a.identity_type 
+                    new_Identity_sql.annotationDate = a.annotation
+                    new_Identity_sql.startDate = a.startdate
+                    new_Identity_sql.endDate = a.enddate
+                    new_Identity_sql.location = a.location
+                    new_Identity_sql.source = a.source
+
+                    session.merge(new_Identity_sql)
+
+        if makeStatus:
+            #if so, connect the table to a variable
+            statuses_table = metadata.tables['statuses']
+
+            #create an empty object to bind to the table
+            class Status_sql(object): pass
+
+            #map table to object
+            mapper(Status_sql, statuses_table)
+
+            for p in tqdm(self.persons):
+                for a in p.status:
+                    new_Status_sql = Status_sql()
+                    new_Status_sql.URI = p.URI
+                    new_Status_sql.status = a.status
+                    new_Status_sql.statusType = a.status_type 
+                    new_Status_sql.annotationDate = a.annotation
+                    new_Status_sql.startDate = a.startdate
+                    new_Status_sql.endDate = a.enddate
+                    new_Status_sql.location = a.location
+                    new_Status_sql.source = a.source
+
+                    session.merge(new_Status_sql)      
+
+
+        if makeLocation_relations:
+            #if so, connect the table to a variable
+            locationRelations_table = metadata.tables['locationRelations']
+
+            #create an empty object to bind to the table
+            class locationRelation_sql(object): pass
+
+            #map table to object
+            mapper(locationRelation_sql, locationRelations_table)
+
+            for p in tqdm(self.persons):
+                for a in p.location_relations:
+                    new_locationRelation_sql = locationRelation_sql()
+                    new_locationRelation_sql.URI = p.URI
+                    new_locationRelation_sql.status = a.status
+                    new_locationRelation_sql.statusType = a.status_type 
+                    new_locationRelation_sql.annotationDate = a.annotation
+                    new_locationRelation_sql.startDate = a.startdate
+                    new_locationRelation_sql.endDate = a.enddate
+                    new_locationRelation_sql.location = a.location
+                    new_locationRelation_sql.source = a.source
+
+                    session.merge(new_locationRelation_sql)   
+
+
+        if makeRelationships:
+            #if so, connect the table to a variable
+            relations_table = metadata.tables['relations']
+
+            #create an empty object to bind to the table
+            class relation_sql(object): pass
+
+            #map table to object
+            mapper(relation_sql, relations_table)
+
+            for p in tqdm(self.persons):
+                for a in p.relationships:
+                    new_relation_sql = relation_sql()
+                    new_relation_sql.person = p.URI
+                    new_relation_sql.otherPerson = a.otherPerson
+                    new_relation_sql.relation = a.relation
+                    new_relation_sql.annotationDate = a.annotation
+                    new_relation_sql.startDate = a.startdate
+                    new_relation_sql.endDate = a.enddate
+                    new_relation_sql.source = a.source
+
+                    session.merge(new_relation_sql)   
+
+        #after all that
+
+        # Commit the session after all merges are done
+        try:
+            session.commit()
+        except OperationalError as e:
+            session.rollback()  # Roll back the transaction on error
+            print(f"An error occurred: {e}")    
+
+
+        session.flush()
 
 
 # In[ ]:
