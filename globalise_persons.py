@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
+# In[1]:
 
 
 from datetime import datetime
@@ -17,7 +17,7 @@ from sqlalchemy.orm import *
 import re
 
 
-# In[1]:
+# In[2]:
 
 
 atomize_list = [' en ', ',']
@@ -80,7 +80,7 @@ def combine_lists(x: list, y: list) -> list:
 
 
 class Person_attribute:
-    def __init__(self, annotation, startdate, enddate, source: str):
+    def __init__(self, annotation, startdate, enddate, source: str, page: str, observation_id: str, original_label: str):
         if vali_date(annotation):
             self.annotation = annotation #date
         else:
@@ -97,6 +97,21 @@ class Person_attribute:
             self.source = source #string
         else:
             raise ValueError('Please format your source as a string')
+            
+        if type(page) == str:
+            self.page = page
+        else:
+            raise ValueError('Please format your page as a string')
+            
+        if type(observation_id) == str:
+            self.observation_id = observation_id
+        else:
+            raise ValueError('Please format your observation_id as a string')
+            
+        if type(original_label) == str:
+            self.original_label = original_label
+        else:
+            raise ValueError('Please format your original label as a string')
             
     def split_up_string(self, input_string, exceptions=False):
         if exceptions:
@@ -127,8 +142,8 @@ class Person_attribute:
 
 
 class Person_attribute_loc(Person_attribute):
-    def __init__(self, annotation, startdate, enddate, source, location):
-        super().__init__(annotation, startdate, enddate, source)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label)
         if type(location) == str: #needs to be an uri eventually
             self.location = location
         else:
@@ -141,8 +156,8 @@ class Person_attribute_loc(Person_attribute):
 
 class Appellation(Person_attribute_loc):
     #has Person_attribute as parent
-    def __init__(self, annotation, startdate, enddate, source, app_str, app_type, location):
-        super().__init__(annotation, startdate, enddate, source, location)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, app_str, app_type, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, '-1', location)
         if type(app_str) == str:
             self.app_str = app_str #the appellation string
         else:
@@ -157,14 +172,14 @@ class Appellation(Person_attribute_loc):
         return f"this person was recorded under the {self.app_type} of {self.app_str} in {self.annotation} according to {self.source}"
 
 
-# In[2]:
+# In[8]:
 
 
 class Activity(Person_attribute_loc):
     
-    def __init__(self, annotation, startdate, enddate, source, function, function_type, employer, location):
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, function, function_type, employer, location):
         
-        super().__init__(annotation, startdate, enddate, source, location)
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label, location)
         
         if type(function) == str: #needs to be an uri eventually
             self.function = function
@@ -190,7 +205,17 @@ class Activity(Person_attribute_loc):
         if len(split) > 1:
             output = []
             for x in split:
-                output.append(Activity(self.annotation, self.startdate, self.enddate, self.source, x, self.function_type, self.employer, self.location))
+                output.append(Activity(self.annotation, 
+                                       self.startdate, 
+                                       self.enddate, 
+                                       self.source, 
+                                       self.page, 
+                                       self.observation_id, 
+                                       self.original_label, 
+                                       x,
+                                       self.function_type, 
+                                       self.employer, 
+                                       self.location))
             return output
         
     def atomize_location(self, atomize_exceptions=False):
@@ -201,7 +226,17 @@ class Activity(Person_attribute_loc):
         if len(split) > 1:
             output = []
             for x in split:
-                output.append(Activity(self.annotation, self.startdate, self.enddate, self.source, self.function, self.function_type, self.employer, x))
+                output.append(Activity(self.annotation, 
+                                       self.startdate, 
+                                       self.enddate, 
+                                       self.source, 
+                                       self.page, 
+                                       self.observation_id, 
+                                       self.original_label, 
+                                       self.function, 
+                                       self.function_type, 
+                                       self.employer, 
+                                       x))
             return output
 
 
@@ -210,8 +245,8 @@ class Activity(Person_attribute_loc):
 
 class Identity(Person_attribute_loc):
     
-    def __init__(self, annotation, startdate, enddate, source, identifier, identity_type, location):
-        super().__init__(annotation, startdate, enddate, source, location)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, identifier, identity_type, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label, location)
         
         if type(identifier) == str: #needs to be URI eventually
             self.identifier = identifier
@@ -232,8 +267,8 @@ class Identity(Person_attribute_loc):
 
 class Status(Person_attribute_loc):
     
-    def __init__(self, annotation, startdate, enddate, source, stat, status_type, location):
-        super().__init__(annotation, startdate, enddate, source, location)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, stat, status_type, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label, location)
         
         if type(stat) == str: #needs to be URI eventually
             self.stat = stat
@@ -254,8 +289,8 @@ class Status(Person_attribute_loc):
 
 class Location_Relation(Person_attribute_loc):
     
-    def __init__(self, annotation, startdate, enddate, source, location_relation, location):
-        super().__init__(annotation, startdate, enddate, source, location)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, location_relation, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label, location)
         
         if type(location_relation) == str: #needs to be an uri eventually
             self.location_relation = location_relation
@@ -271,8 +306,8 @@ class Location_Relation(Person_attribute_loc):
 
 class Relationship(Person_attribute):
     
-    def __init__(self, annotation, startdate, enddate, source, relation, otherPerson):
-        super().__init__(annotation, startdate, enddate, source)
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, relation, otherPerson):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label,)
         
         if type(relation) == str: #needs to be an uri eventually
             self.relation = relation
@@ -288,7 +323,7 @@ class Relationship(Person_attribute):
         return f"this person had a relationship of {self.relation} to {self.otherPerson} from {self.startdate} to {self.enddate}, according to {self.source} recorded on {self.annotation}"
 
 
-# In[19]:
+# In[13]:
 
 
 class Person:
@@ -470,7 +505,7 @@ class Person:
                         self.active_as.remove(act)
 
 
-# In[4]:
+# In[14]:
 
 
 class Personlist:
@@ -525,53 +560,7 @@ class Personlist:
                     break
             if not found:
                 output.append(p)
-        return output         
-    
-    def to_excel(self, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True):
-        if makeOverview:
-            overviewFrame = []
-            for p in self.persons:
-                overviewFrame.append([p.URI, p.DOB, p.DOD])
-            overviewFrame = pd.DataFrame(overviewFrame, columns=['URI', 'DOB', 'DOD'])
-        if makeAppellations:
-            appellationsFrame = []
-            for p in self.persons:
-                for a in p.appellations:
-                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location, a.source])
-            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'AnnotationDate', 'Startdate', 'Enddate', 'Location', 'Source'])
-        if makeActive_as:
-            activeAsFrame = []
-            for p in self.persons:
-                for a in p.active_as:
-                    activeAsFrame.append([p.URI, a.function, a.function_type, a.employer, a.location, a.annotation, a.startdate, a.enddate, a.source])
-            activeAsFrame = pd.DataFrame(activeAsFrame, columns=['URI', 'Activity', 'ActivityType', 'Employer', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
-        if makeIdentified_as:
-            identifiedAsFrame = []
-            for p in self.persons:
-                for identity in p.identified_as:
-                    identifiedAsFrame.append([p.URI, identity.identifier, identity.identity_type, identity.location, identity.annotation, identity.startdate, identity.enddate, identity.source])
-            identifiedAsFrame = pd.DataFrame(identifiedAsFrame, columns=['URI', 'Identity', 'IdentityType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
-        if makeStatus:
-            statusFrame = []
-            for p in self.persons:
-                for status in p.status:
-                    statusFrame.append([p.URI, status.stat, status.status_type, status.location, status.annotation, status.startdate, status.enddate, status.source])
-            statusFrame = pd.DataFrame(statusFrame, columns=['URI', 'Status', 'StatusType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
-        if makeLocation_relations:
-            locationRelationFrame = []
-            for p in self.persons:
-                for lr in p.location_relations:
-                    locationRelationFrame.append([p.URI, lr.location_relation, lr.location, lr.annotation, lr.startdate, lr.enddate, lr.source])
-            locationRelationFrame = pd.DataFrame(locationRelationFrame, columns=['URI', 'LocationRelation', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
-        if makeRelationships:
-            relationFrame = []
-            for p in self.persons:
-                for r in p.relationships:
-                    relationFrame.append([p.URI, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source])
-            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])     
-           
-        
-        return overviewFrame.to_excel('overview.xlsx'), appellationsFrame.to_excel('appellations.xlsx'), activeAsFrame.to_excel('activities.xlsx'), identifiedAsFrame.to_excel('identities.xlsx'), statusFrame.to_excel('status.xlsx'), locationRelationFrame.to_excel('locationRelations.xlsx'), relationFrame.to_excel('relationships.xlsx')
+        return output             
     
     def to_csv(self, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True):
         if makeOverview:
@@ -583,38 +572,38 @@ class Personlist:
             appellationsFrame = []
             for p in self.persons:
                 for a in p.appellations:
-                    appellationsFrame.append([p.URI, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location,a.source])
-            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI','Appellation', 'AppellationType', 'Location', 'AnnotationDate', 'Startdate', 'Enddate', 'Source'])
+                    appellationsFrame.append([p.URI, a.observation_id, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location, a.source, a.page])
+            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI', 'Observation', 'Appellation', 'AppellationType', 'Location', 'AnnotationDate', 'Startdate', 'Enddate', 'Source', 'Location in Source'])
         if makeActive_as:
             activeAsFrame = []
             for p in self.persons:
                 for a in p.active_as:
-                    activeAsFrame.append([p.URI, a.function, a.function_type, a.employer, a.location, a.annotation, a.startdate, a.enddate, a.source])
-            activeAsFrame = pd.DataFrame(activeAsFrame, columns=['URI', 'Activity', 'ActivityType', 'Employer', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
+                    activeAsFrame.append([p.URI, a.observation_id, a.original_label, a.function, a.function_type, a.employer, a.location, a.annotation, a.startdate, a.enddate, a.source, a.page])
+            activeAsFrame = pd.DataFrame(activeAsFrame, columns=['URI', 'Observation', 'Original Label', 'Activity', 'ActivityType', 'Employer', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])
         if makeIdentified_as:
             identifiedAsFrame = []
             for p in self.persons:
                 for identity in p.identified_as:
-                    identifiedAsFrame.append([p.URI, identity.identifier, identity.identity_type, identity.location, identity.annotation, identity.startdate, identity.enddate, identity.source])
-            identifiedAsFrame = pd.DataFrame(identifiedAsFrame, columns=['URI', 'Identity', 'IdentityType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
+                    identifiedAsFrame.append([p.URI, identity.observation_id, identity.original_label, identity.identifier, identity.identity_type, identity.location, identity.annotation, identity.startdate, identity.enddate, identity.source, identity.page])
+            identifiedAsFrame = pd.DataFrame(identifiedAsFrame, columns=['URI', 'Observation', 'Original Label', 'Identity', 'IdentityType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])
         if makeStatus:
             statusFrame = []
             for p in self.persons:
                 for status in p.status:
-                    statusFrame.append([p.URI, status.stat, status.status_type, status.location, status.annotation, status.startdate, status.enddate, status.source])
-            statusFrame = pd.DataFrame(statusFrame, columns=['URI', 'Status', 'StatusType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
+                    statusFrame.append([p.URI, status.observation_id, status.original_label, status.stat, status.status_type, status.location, status.annotation, status.startdate, status.enddate, status.source, status.page])
+            statusFrame = pd.DataFrame(statusFrame, columns=['URI', 'Observation', 'Original Label', 'Status', 'StatusType', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])
         if makeLocation_relations:
             locationRelationFrame = []
             for p in self.persons:
                 for lr in p.location_relations:
-                    locationRelationFrame.append([p.URI, lr.location_relation, lr.location, lr.annotation, lr.startdate, lr.enddate, lr.source])
-            locationRelationFrame = pd.DataFrame(locationRelationFrame, columns=['URI', 'LocationRelation', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])
+                    locationRelationFrame.append([p.URI, lr.observation_id, lr.original_label, lr.location_relation, lr.location, lr.annotation, lr.startdate, lr.enddate, lr.source, lr.page])
+            locationRelationFrame = pd.DataFrame(locationRelationFrame, columns=['URI', 'Observation', 'Original Label', 'LocationRelation', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])
         if makeRelationships:
             relationFrame = []
             for p in self.persons:
                 for r in p.relationships:
-                    relationFrame.append([p.URI, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source])
-            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source'])     
+                    relationFrame.append([p.URI, r.observation_id, r.original_label, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
+            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Original Label', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
            
         
         return overviewFrame.to_csv('overview.csv'), appellationsFrame.to_csv('appellations.csv'), activeAsFrame.to_csv('activities.csv'), identifiedAsFrame.to_csv('identities.csv'), statusFrame.to_csv('status.csv'), locationRelationFrame.to_csv('locationRelations.csv'), relationFrame.to_csv('relationships.csv')
@@ -663,6 +652,7 @@ class Personlist:
                 for a in p.appellations:
                     new_appellation_sql = Appellation_sql()
                     new_appellation_sql.URI = p.URI
+                    new_appellation_sql.observation_id = a.observation_id
                     new_appellation_sql.appellation = a.app_str
                     new_appellation_sql.appellationType = a.app_type 
                     new_appellation_sql.annotationDate = a.annotation
@@ -670,8 +660,10 @@ class Personlist:
                     new_appellation_sql.endDate = a.enddate
                     new_appellation_sql.location = a.location
                     new_appellation_sql.source = a.source
+                    new_appellation_sql.location_in_source = a.page
 
                     session.merge(new_appellation_sql)
+                    
 
         if makeActive_as:
             #if so, connect the table to a variable
@@ -687,6 +679,8 @@ class Personlist:
                 for a in p.active_as:
                     new_activeAs_sql = activeAs_sql()
                     new_activeAs_sql.URI = p.URI
+                    new_activeAs_sql.observation_id = a.observation_id
+                    new_activeAs_sql.original_label = a.original_label
                     new_activeAs_sql.activity = a.function
                     new_activeAs_sql.activityType = a.function_type 
                     new_activeAs_sql.employer = a.employer
@@ -695,8 +689,10 @@ class Personlist:
                     new_activeAs_sql.endDate = a.enddate
                     new_activeAs_sql.location = a.location
                     new_activeAs_sql.source = a.source
+                    new_activeAs_sql.location_in_source = a.page
 
                     session.merge(new_activeAs_sql)
+                    
 
 
         if makeIdentified_as:
@@ -713,6 +709,8 @@ class Personlist:
                 for a in p.identified_as:
                     new_Identity_sql = Identity_sql()
                     new_Identity_sql.URI = p.URI
+                    new_Identity_sql.observation_id = a.observation_id
+                    new_Identity_sql.original_label = a.original_label
                     new_Identity_sql.identity = a.identifier
                     new_Identity_sql.identityType = a.identity_type 
                     new_Identity_sql.annotationDate = a.annotation
@@ -720,6 +718,7 @@ class Personlist:
                     new_Identity_sql.endDate = a.enddate
                     new_Identity_sql.location = a.location
                     new_Identity_sql.source = a.source
+                    new_Identity_sql.location_in_source = a.page
 
                     session.merge(new_Identity_sql)
 
@@ -737,6 +736,8 @@ class Personlist:
                 for a in p.status:
                     new_Status_sql = Status_sql()
                     new_Status_sql.URI = p.URI
+                    new_Status_sql.observation_id = a.observation_id
+                    new_Status_sql.original_label = a.original_label
                     new_Status_sql.status = a.status
                     new_Status_sql.statusType = a.status_type 
                     new_Status_sql.annotationDate = a.annotation
@@ -744,6 +745,7 @@ class Personlist:
                     new_Status_sql.endDate = a.enddate
                     new_Status_sql.location = a.location
                     new_Status_sql.source = a.source
+                    new_Status_sql.location_in_source = a.page
 
                     session.merge(new_Status_sql)      
 
@@ -762,6 +764,8 @@ class Personlist:
                 for a in p.location_relations:
                     new_locationRelation_sql = locationRelation_sql()
                     new_locationRelation_sql.URI = p.URI
+                    new_locationRelation_sql.observation_id = a.observation_id
+                    new_locationRelation_sql.original_label = a.original_label
                     new_locationRelation_sql.status = a.status
                     new_locationRelation_sql.statusType = a.status_type 
                     new_locationRelation_sql.annotationDate = a.annotation
@@ -769,6 +773,7 @@ class Personlist:
                     new_locationRelation_sql.endDate = a.enddate
                     new_locationRelation_sql.location = a.location
                     new_locationRelation_sql.source = a.source
+                    new_locationRelation_sql.location_in_source = a.page
 
                     session.merge(new_locationRelation_sql)   
 
@@ -787,12 +792,15 @@ class Personlist:
                 for a in p.relationships:
                     new_relation_sql = relation_sql()
                     new_relation_sql.person = p.URI
+                    new_relation_sql.observation_id = a.observation_id
+                    new_relation_sql.original_label = a.original_label
                     new_relation_sql.otherPerson = a.otherPerson
                     new_relation_sql.relation = a.relation
                     new_relation_sql.annotationDate = a.annotation
                     new_relation_sql.startDate = a.startdate
                     new_relation_sql.endDate = a.enddate
                     new_relation_sql.source = a.source
+                    new_relation_sql.location_in_source = a.page
 
                     session.merge(new_relation_sql)   
 
