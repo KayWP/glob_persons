@@ -20,6 +20,18 @@ import re
 # In[2]:
 
 
+
+
+
+# In[3]:
+
+
+
+
+
+# In[2]:
+
+
 atomize_list = [' en ', ',']
 
 def load_tuples(split_file, nosplit_file):
@@ -144,11 +156,7 @@ class Person_attribute:
 class Person_attribute_loc(Person_attribute):
     def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, location):
         super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label)
-        if type(location) == str: #needs to be an uri eventually
-            self.location = location
-        else:
-            raise ValueError('Please format the location as as str')
-            
+        self.location = location            
 
 
 # In[7]:
@@ -482,7 +490,13 @@ class Person:
                         for y in x:
                             self.active_as.append(y)
                         self.active_as.remove(act)
-                    
+     
+    def link_functions(self, functions_dict):
+        for a in self.active_as:
+            try:
+                a.function = functions_dict[a.function]
+            except KeyError:
+                a.function = '-1'
                     
     def atomize_function_locations(self, a_exceptions=False):
         if len(self.active_as) < 1:
@@ -530,6 +544,10 @@ class Personlist:
                 p.atomize_functions(a_exceptions=use_exceptions)
             else:
                 p.atomize_functions()
+            
+    def link_functions_list(self, functions_dict):
+        for p in self.persons:
+            p.link_functions(functions_dict)
             
     def atomize_function_locations_list(self, use_exceptions=False):
         for p in self.persons:
@@ -602,8 +620,8 @@ class Personlist:
             relationFrame = []
             for p in self.persons:
                 for r in p.relationships:
-                    relationFrame.append([p.URI, r.observation_id, r.original_label, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
-            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Original Label', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
+                    relationFrame.append([p.URI, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
+            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
            
         
         return overviewFrame.to_csv('overview.csv'), appellationsFrame.to_csv('appellations.csv'), activeAsFrame.to_csv('activities.csv'), identifiedAsFrame.to_csv('identities.csv'), statusFrame.to_csv('status.csv'), locationRelationFrame.to_csv('locationRelations.csv'), relationFrame.to_csv('relationships.csv')
