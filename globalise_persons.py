@@ -180,6 +180,28 @@ class Appellation(Person_attribute_loc):
         return f"this person was recorded under the {self.app_type} of {self.app_str} in {self.annotation} according to {self.source}"
 
 
+# In[ ]:
+
+
+class Event(Person_attribute_loc):
+    
+    def __init__(self, annotation, startdate, enddate, source, page, observation_id, original_label, event, argument, location):
+        super().__init__(annotation, startdate, enddate, source, page, observation_id, original_label, location)
+        
+        if type(event) == str: #needs to be URI eventually
+            self.event = event
+        else:
+            raise ValueError('Please format your event as a str')
+               
+        if type(argument) == str: #needs to be URI eventually
+            self.argument = argument
+        else:
+            raise ValueError('Please format your identity type as a str')    
+            
+    def __str__(self) -> str:
+        return f"this person was identified as {self.argument} in a {self.event} event from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
+
+
 # In[8]:
 
 
@@ -345,7 +367,8 @@ class Person:
         identified_as: Optional[List[Identity]] = None,
         status: Optional[List[Status]] = None,
         relationships: Optional[List[Relationship]] = None,
-        location_relations: Optional[List[Location_Relation]] = None
+        location_relations: Optional[List[Location_Relation]] = None,
+        events: Optional[List[Event]] = None
     ):
         if not isinstance(URI, str):
             raise TypeError("URI must be a string.")
@@ -389,6 +412,11 @@ class Person:
             raise TypeError("location_relations must be a list of Location_Relation objects.")
         self.location_relations = location_relations or []
         
+        # Check that location_relations is a list of Location_Relation objects
+        if events is not None and not all(isinstance(e, Event) for e in events):
+            raise TypeError("events must be a list of Event objects.")
+        self.events = events or []
+        
     def printinfo(self):
         print(f"URI: {self.URI}")
         #for p in self.previousURI:
@@ -412,6 +440,8 @@ class Person:
         print('\n')
         for l in self.location_relations:
             print(l)
+        for e in self.events:
+            print(e)
         
     def __str__(self) -> str:
         return self.URI
@@ -580,7 +610,7 @@ class Personlist:
                 output.append(p)
         return output             
     
-    def to_csv(self, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True):
+    def to_csv(self, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True, makeEvents=True):
         if makeOverview:
             overviewFrame = []
             for p in self.persons:
@@ -622,11 +652,17 @@ class Personlist:
                 for r in p.relationships:
                     relationFrame.append([p.URI, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
             relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
-           
         
-        return overviewFrame.to_csv('overview.csv'), appellationsFrame.to_csv('appellations.csv'), activeAsFrame.to_csv('activities.csv'), identifiedAsFrame.to_csv('identities.csv'), statusFrame.to_csv('status.csv'), locationRelationFrame.to_csv('locationRelations.csv'), relationFrame.to_csv('relationships.csv')
+        if makeEvents:
+            eventsFrame = []
+            for p in self.persons:
+                for e in p.events:
+                    eventsFrame.append([p.URI, e.observation_id, e.original_label, e.event, e.argument, e.location, e.annotation, e.startdate, e.enddate, e.source, e.page])
+            eventsFrame = pd.DataFrame(eventsFrame, columns=['URI', 'Observation', 'Original Label', 'Event', 'Argument', 'Location', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])
+        
+        return overviewFrame.to_csv('overview.csv'), appellationsFrame.to_csv('appellations.csv'), activeAsFrame.to_csv('activities.csv'), identifiedAsFrame.to_csv('identities.csv'), statusFrame.to_csv('status.csv'), locationRelationFrame.to_csv('locationRelations.csv'), relationFrame.to_csv('relationships.csv'), eventsFrame.to_csv('events.csv')
     
-    def update_db(self, db, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True):
+    def update_db(self, db, makeOverview=True, makeAppellations=True, makeActive_as=True, makeIdentified_as=True, makeStatus=True, makeLocation_relations=True, makeRelationships=True, makeEvents=True):
     
         #create engine
         engine = create_engine(f'sqlite:///{db}')
@@ -821,6 +857,30 @@ class Personlist:
                     new_relation_sql.location_in_source = a.page
 
                     session.merge(new_relation_sql)   
+                    
+        if makeEvents:
+            events_table = metadata.tables['events']
+            
+            class event_sql(object): pass
+            
+            #map table to object
+            mapper(event_sql, events_table)
+            
+            for p in tqdm(self.persons):
+                for a in p.events:
+                    new_event_sql = event_sql()
+                    new_event_sql.person = p.URI
+                    new_event_sql.observation_id = a.observation_id
+                    new_event_sql.original_label = a.original_label
+                    new_event_sql.event = a.event
+                    new_event_sql.argument = a.argument
+                    new_event_sql.annotationDate = a.annotation
+                    new_event_sql.startDate = a.startdate
+                    new_event_sql.endDate = a.enddate
+                    new_event_sql.source = a.source
+                    new_event_sql.location_in_source = a.page
+
+                    session.merge(new_event_sql)   
 
         #after all that
 
