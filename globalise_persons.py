@@ -687,10 +687,9 @@ class Personlist:
             mapper(Overview_sql, overview_table)
 
             for p in tqdm(self.persons):
-                for p in self.persons:
-                    new_overview_sql = Overview_sql()
-                    new_overview_sql.URI = p.URI
-                    session.merge(new_overview_sql)
+                new_overview_sql = Overview_sql()
+                new_overview_sql.URI = p.URI
+                session.merge(new_overview_sql)
 
         if makeAppellations:
             #if so, connect the table to a variable
