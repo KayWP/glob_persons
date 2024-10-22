@@ -650,8 +650,8 @@ class Personlist:
             relationFrame = []
             for p in self.persons:
                 for r in p.relationships:
-                    relationFrame.append([p.URI, r.relation, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
-            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
+                    relationFrame.append([p.URI, r.observation_id, r.relation, r.original_label, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
+            relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Original Label','Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
         
         if makeEvents:
             eventsFrame = []
