@@ -16,6 +16,8 @@ from sqlalchemy.orm import *
 
 import re
 
+import csv
+
 
 # In[2]:
 
@@ -32,7 +34,7 @@ import re
 # In[2]:
 
 
-atomize_list = [' en ', ',']
+atomize_list = [' en ', ',', 'mitsgaders', ';']
 
 def load_tuples(split_file, nosplit_file):
     with open(split_file, 'r') as f:
@@ -177,7 +179,7 @@ class Appellation(Person_attribute_loc):
      
         
     def __str__(self) -> str:
-        return f"this person was recorded under the {self.app_type} of {self.app_str} in {self.annotation} according to {self.source}"
+        return f"this person was recorded under the {self.app_type} of {self.app_str} according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[ ]:
@@ -199,7 +201,7 @@ class Event(Person_attribute_loc):
             raise ValueError('Please format your identity type as a str')    
             
     def __str__(self) -> str:
-        return f"this person was identified as {self.argument} in a {self.event} event from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
+        return f"this person was identified as {self.argument} in a {self.event} event from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[8]:
@@ -225,7 +227,7 @@ class Activity(Person_attribute_loc):
             raise ValueError('Please format the employer as a str')
             
     def __str__(self) -> str:
-        return f"this person was active as a {self.function} in {self.location}, which is a(n) {self.function_type}, for {self.employer} from {self.startdate} to {self.enddate} as noted in {self.source} on {self.annotation}"
+        return f"According to observation {self.observation_id} this person was active as a {self.original_label} in {self.location}, which is a(n) {self.function_type}. They were employed by {self.employer} from {self.startdate} to {self.enddate} as noted in {self.source} recorded at the following point in time: {self.annotation}"
     
     def atomize(self, atomize_exceptions=False):
         if atomize_exceptions:
@@ -289,7 +291,7 @@ class Identity(Person_attribute_loc):
             raise ValueError('Please format your identity type as a str')    
             
     def __str__(self) -> str:
-        return f"this person was identified as {self.identifier}, a {self.identity_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
+        return f"this person was identified as {self.original_label}, GLOBALISE identity type: {self.identity_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[10]:
@@ -311,7 +313,7 @@ class Status(Person_attribute_loc):
             raise ValueError('Please format your status type as a str')
             
     def __str__(self) -> str:
-        return f"this person held the status of {self.stat}, a {self.status_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded on {self.annotation}"
+        return f"this person held the status of {self.stat}, a {self.status_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[11]:
@@ -328,7 +330,7 @@ class Location_Relation(Person_attribute_loc):
             raise ValueError('Please format the location to relation as a str')
             
     def __str__(self) -> str:
-        return f"this person had a relation of {self.location_relation} to {self.location} from {self.startdate} to {self.enddate}, according to {self.source} recorded on {self.annotation}"
+        return f"this person had a relation of {self.location_relation} to {self.location} from {self.startdate} to {self.enddate}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[12]:
@@ -350,7 +352,7 @@ class Relationship(Person_attribute):
             raise ValueError('Please properly format the other person reference as an str')
             
     def __str__(self) -> str:
-        return f"this person had a relationship of {self.relation} to {self.otherPerson} from {self.startdate} to {self.enddate}, according to {self.source} recorded on {self.annotation}"
+        return f"this person had a relationship of {self.original_label} to {self.otherPerson} from {self.startdate} to {self.enddate}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
 # In[13]:
@@ -421,27 +423,29 @@ class Person:
         print(f"URI: {self.URI}")
         #for p in self.previousURI:
             #print(f"Previous URI: {p}")
-        print(f"DOB: {self.DOB}")
-        print(f"DOD: {self.DOD}")
+        #print(f"DOB: {self.DOB}")
+        #print(f"DOD: {self.DOD}")
         for a in self.appellations:
             print(a)
-        print('\n')
+        #print('\n')
         for a in self.active_as:
             print(a)
-        print('\n')
+        #print('\n')
         for i in self.identified_as:
             print(i)
-        print('\n')
+        #print('\n')
         for s in self.status:
             print(s)
-        print('\n')
+        #print('\n')
         for r in self.relationships:
             print(r)
-        print('\n')
+        #print('\n')
         for l in self.location_relations:
             print(l)
         for e in self.events:
             print(e)
+            
+        print("")
         
     def __str__(self) -> str:
         return self.URI
@@ -521,12 +525,24 @@ class Person:
                             self.active_as.append(y)
                         self.active_as.remove(act)
      
-    def link_functions(self, functions_dict):
-        for a in self.active_as:
-            try:
-                a.function = functions_dict[a.function]
-            except KeyError:
-                a.function = '-1'
+    def link_functions(self, functions_dict, error_log_filename='keyerror_log.csv'):
+        # Open the CSV file for appending the error log
+        with open(error_log_filename, mode='a', newline='') as csvfile:
+            error_writer = csv.writer(csvfile)
+
+            # Process the active_as list
+            for a in self.active_as:
+                x = a.function.lower().strip()
+                print(x)
+                try:
+                    # Try to replace the function
+                    a.function = functions_dict[x]
+                    print(f"replaced with {a.function}")
+                    print("")
+                except KeyError:
+                    # If a KeyError occurs, log it to the CSV file
+                    error_writer.writerow([a.function])  # Write the problematic function to a new row
+                    a.function = '-1'  # Set function to '-1'
                     
     def atomize_function_locations(self, a_exceptions=False):
         if len(self.active_as) < 1:
@@ -574,7 +590,11 @@ class Personlist:
                 p.atomize_functions(a_exceptions=use_exceptions)
             else:
                 p.atomize_functions()
-            
+    
+    def print_all_persons(self):
+        for p in self.persons:
+            p.printinfo()
+    
     def link_functions_list(self, functions_dict):
         for p in self.persons:
             p.link_functions(functions_dict)
@@ -892,6 +912,20 @@ class Personlist:
 
 
         session.flush()
+
+
+# In[5]:
+
+
+def import_linking_list(filename):
+    #Reads a CSV file and converts it into a dictionary where the 'original_label' is the key and the 'URI' is the value.
+    result = {}
+
+    # Read the CSV into a DataFrame
+    df = pd.read_csv(filename)
+    # Convert the DataFrame into a dictionary
+    result = dict(zip(df['original_label'].str.strip(), df['URI'].str.strip()))
+    return result
 
 
 # In[ ]:
