@@ -507,7 +507,7 @@ class Person:
             
     def atomize_functions(self, a_exceptions=False):
         if len(self.active_as) < 1:
-            print('There is no active as for this person.')
+            print(f'There is no active as for this person {self.URI}.')
         else:
             if a_exceptions:
                 for act in self.active_as:
