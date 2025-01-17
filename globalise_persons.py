@@ -34,7 +34,7 @@ import csv
 # In[2]:
 
 
-atomize_list = [' en ', ',', 'mitsgaders', ';']
+atomize_list = [' en ', ',', 'mitsgaders', ';', 'EN', ', en']
 
 def load_tuples(split_file, nosplit_file):
     with open(split_file, 'r') as f:
@@ -533,12 +533,12 @@ class Person:
             # Process the active_as list
             for a in self.active_as:
                 x = a.function.lower().strip()
-                print(x)
+                #print(x)
                 try:
                     # Try to replace the function
                     a.function = functions_dict[x]
-                    print(f"replaced with {a.function}")
-                    print("")
+                    #print(f"replaced with {a.function}")
+                    #print("")
                 except KeyError:
                     # If a KeyError occurs, log it to the CSV file
                     error_writer.writerow([a.function])  # Write the problematic function to a new row
@@ -641,7 +641,7 @@ class Personlist:
             for p in self.persons:
                 for a in p.appellations:
                     appellationsFrame.append([p.URI, a.observation_id, a.app_str, a.app_type, a.annotation, a.startdate, a.enddate, a.location, a.source, a.page])
-            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI', 'Observation', 'Appellation', 'AppellationType', 'Location', 'AnnotationDate', 'Startdate', 'Enddate', 'Source', 'Location in Source'])
+            appellationsFrame = pd.DataFrame(appellationsFrame, columns=['URI', 'Observation', 'Appellation', 'AppellationType', 'AnnotationDate', 'Startdate', 'Enddate', 'Location', 'Source', 'Location in Source'])
         if makeActive_as:
             activeAsFrame = []
             for p in self.persons:
@@ -670,7 +670,7 @@ class Personlist:
             relationFrame = []
             for p in self.persons:
                 for r in p.relationships:
-                    relationFrame.append([p.URI, r.observation_id, r.relation, r.original_label, r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
+                    relationFrame.append([p.URI, r.observation_id, r.original_label, r.relation,  r.otherPerson, r.annotation, r.startdate, r.enddate, r.source, r.page])
             relationFrame = pd.DataFrame(relationFrame, columns=['URI', 'Observation', 'Original Label','Relation', 'OtherPerson', 'AnnotationDate', 'StartDate', 'EndDate', 'Source', 'Location in Source'])     
         
         if makeEvents:
@@ -924,7 +924,8 @@ def import_linking_list(filename):
     # Read the CSV into a DataFrame
     df = pd.read_csv(filename)
     # Convert the DataFrame into a dictionary
-    result = dict(zip(df['original_label'].str.strip(), df['URI'].str.strip()))
+    result = dict(zip(df['original_label'].str.strip().str.lower(), df['URI']))
+
     return result
 
 
