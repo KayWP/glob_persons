@@ -22,7 +22,7 @@ import csv
 # In[2]:
 
 
-
+uri_identifier = 'https://digitaalerfgoed.poolparty.biz/globalise/'
 
 
 # In[3]:
@@ -525,7 +525,7 @@ class Person:
                             self.active_as.append(y)
                         self.active_as.remove(act)
      
-    def link_functions(self, functions_dict, error_log_filename='keyerror_log.csv'):
+    def link_functions(self, functions_dict, error_log_filename='keyerror_log.csv', final_linking=True):
         # Open the CSV file for appending the error log
         with open(error_log_filename, mode='a', newline='') as csvfile:
             error_writer = csv.writer(csvfile)
@@ -540,9 +540,16 @@ class Person:
                     #print(f"replaced with {a.function}")
                     #print("")
                 except KeyError:
-                    # If a KeyError occurs, log it to the CSV file
-                    error_writer.writerow([a.function])  # Write the problematic function to a new row
-                    a.function = '-1'  # Set function to '-1'
+                    if final_linking:
+                        if a.function.startswith('https://digitaalerfgoed.poolparty.biz/globalise/'):
+                            a.function = a.function
+                            
+                        else:
+                            # If a KeyError occurs, log it to the CSV file
+                            error_writer.writerow([a.function])  # Write the problematic function to a new row
+                            a.function = '-1'  # Set function to '-1'
+                    else:
+                        a.function = a.function
                     
     def atomize_function_locations(self, a_exceptions=False):
         if len(self.active_as) < 1:
@@ -595,9 +602,9 @@ class Personlist:
         for p in self.persons:
             p.printinfo()
     
-    def link_functions_list(self, functions_dict):
+    def link_functions_list(self, functions_dict, final_linking_round=True):
         for p in self.persons:
-            p.link_functions(functions_dict)
+            p.link_functions(functions_dict, final_linking=final_linking_round)
             
     def atomize_function_locations_list(self, use_exceptions=False):
         for p in self.persons:
