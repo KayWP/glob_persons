@@ -579,8 +579,8 @@ class Person:
                 #print(x)
 
                 if x in clean_dont_process:
-                    print(f"removing {x} from {self.URI}")
-
+                    #print(f"removing {x} from {self.URI}")
+                    pass
                 else:
                     try:
                         # Try to replace the function
