@@ -18,6 +18,8 @@ import re
 
 import csv
 
+import copy
+
 
 # In[2]:
 
@@ -25,13 +27,13 @@ import csv
 uri_identifier = 'https://digitaalerfgoed.poolparty.biz/globalise/'
 
 
+# In[ ]:
+
+
+
+
+
 # In[3]:
-
-
-
-
-
-# In[2]:
 
 
 atomize_list = [' en ', ',', 'mitsgaders', ';', 'EN', ', en']
@@ -52,7 +54,7 @@ def save_tuples(split_tuple, nosplit_tuple, split_file, nosplit_file):
             f.write(f"{item}\n")
 
 
-# In[3]:
+# In[4]:
 
 
 def vali_date(date_string: str) -> bool:
@@ -73,7 +75,7 @@ def vali_date(date_string: str) -> bool:
     return False
 
 
-# In[4]:
+# In[5]:
 
 
 def combine_lists(x: list, y: list) -> list:
@@ -90,7 +92,7 @@ def combine_lists(x: list, y: list) -> list:
         return []
 
 
-# In[5]:
+# In[6]:
 
 
 class Person_attribute:
@@ -152,7 +154,7 @@ class Person_attribute:
         
 
 
-# In[6]:
+# In[7]:
 
 
 class Person_attribute_loc(Person_attribute):
@@ -161,7 +163,7 @@ class Person_attribute_loc(Person_attribute):
         self.location = location            
 
 
-# In[7]:
+# In[8]:
 
 
 class Appellation(Person_attribute_loc):
@@ -182,7 +184,7 @@ class Appellation(Person_attribute_loc):
         return f"this person was recorded under the {self.app_type} of {self.app_str} according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[ ]:
+# In[9]:
 
 
 class Event(Person_attribute_loc):
@@ -204,7 +206,7 @@ class Event(Person_attribute_loc):
         return f"this person was identified as {self.argument} in a {self.event} event from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[8]:
+# In[10]:
 
 
 class Activity(Person_attribute_loc):
@@ -227,9 +229,9 @@ class Activity(Person_attribute_loc):
             raise ValueError('Please format the employer as a str')
             
     def __str__(self) -> str:
-        return f"According to observation {self.observation_id} this person was active as a {self.original_label} in {self.location}, which is a(n) {self.function_type}. They were employed by {self.employer} from {self.startdate} to {self.enddate} as noted in {self.source} recorded at the following point in time: {self.annotation}"
+        return f"According to observation {self.observation_id} this person was active as a {self.original_label}, disambiguated as {self.function} in {self.location}, which is a(n) {self.function_type}. They were employed by {self.employer} from {self.startdate} to {self.enddate} as noted in {self.source} recorded at the following point in time: {self.annotation}"
     
-    def atomize(self, atomize_exceptions=False):
+    def atomize(self, atomize_exceptions=False, dont_process_list=False):
         if atomize_exceptions:
             split = super().split_up_string(self.function, exceptions=atomize_exceptions)
         else:
@@ -272,7 +274,7 @@ class Activity(Person_attribute_loc):
             return output
 
 
-# In[9]:
+# In[11]:
 
 
 class Identity(Person_attribute_loc):
@@ -294,7 +296,7 @@ class Identity(Person_attribute_loc):
         return f"this person was identified as {self.original_label}, GLOBALISE identity type: {self.identity_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[10]:
+# In[12]:
 
 
 class Status(Person_attribute_loc):
@@ -316,7 +318,7 @@ class Status(Person_attribute_loc):
         return f"this person held the status of {self.stat}, a {self.status_type} from {self.startdate} to {self.enddate} in {self.location}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[11]:
+# In[13]:
 
 
 class Location_Relation(Person_attribute_loc):
@@ -333,7 +335,7 @@ class Location_Relation(Person_attribute_loc):
         return f"this person had a relation of {self.location_relation} to {self.location} from {self.startdate} to {self.enddate}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[12]:
+# In[14]:
 
 
 class Relationship(Person_attribute):
@@ -355,7 +357,7 @@ class Relationship(Person_attribute):
         return f"this person had a relationship of {self.original_label} to {self.otherPerson} from {self.startdate} to {self.enddate}, according to {self.source} recorded at the following point in time: {self.annotation}"
 
 
-# In[13]:
+# In[31]:
 
 
 class Person:
@@ -450,6 +452,30 @@ class Person:
     def __str__(self) -> str:
         return self.URI
     
+    def filter_activities(self, dont_process: List[str]):
+        """
+        Removes activities from the `active_as` list where the activity's function
+        is in the `dont_process` list.
+
+        :param dont_process: List of functions to be excluded.
+        """
+        dont_process_lower = [function.lower() for function in dont_process]  # Normalize dont_process to lowercase
+
+        if len(self.active_as) < 1:
+            return  # No activities to filter
+
+        # Use a filtered list instead of modifying the list in place
+        new_active_as = []
+        for act in self.active_as:
+            if act.function.lower() in dont_process_lower:
+                print(f'removed {act.function} from {self.URI}')
+            else:
+                new_active_as.append(act)
+
+        # Replace the original list with the filtered list
+        self.active_as = new_active_as
+
+    
     def add_relationship(self, other, relationsh, inverse_relationship, personlist, annotation, start, end, source, newPerson = True):
         personAuri = self.URI
         if newPerson == True:
@@ -506,50 +532,75 @@ class Person:
             raise TypeError('Unsupported operand type for +')
             
     def atomize_functions(self, a_exceptions=False):
-        if len(self.active_as) < 1:
+        if not self.active_as:
             print(f'There is no active as for this person {self.URI}.')
-        else:
-            if a_exceptions:
-                for act in self.active_as:
-                    x = act.atomize(atomize_exceptions=a_exceptions)
-                    if x:
-                        for y in x:
-                            self.active_as.append(y)
-                        self.active_as.remove(act)
-                        
+            return
+
+        new_active_as = []  # Store new activities separately
+        for act in self.active_as:
+            x = act.atomize(atomize_exceptions=a_exceptions) if a_exceptions else act.atomize()
+            if x:
+                new_active_as.extend(x)  # Add the split activities
             else:
-                for act in self.active_as:
-                    x = act.atomize()
-                    if x:
-                        for y in x:
-                            self.active_as.append(y)
-                        self.active_as.remove(act)
+                new_active_as.append(act)  # Keep the original if not split
+
+        self.active_as = new_active_as  # Replace the list after iteration
+
      
-    def link_functions(self, functions_dict, error_log_filename='keyerror_log.csv', final_linking=True):
+    def link_functions(self, functions_dict, dont_process=[], error_log_filename='keyerror_log.csv', final_linking=False):
+        
+        def clean_text(text: str) -> str:
+            text = text.lower().strip()
+            text = re.sub(r'\s+', ' ', text)
+            text = text.replace(',', '')
+            return text
+
+        def create_new_activity(original_activity, new_function_value):
+            new_activity = copy.deepcopy(original_activity)
+            new_activity.function = new_function_value
+            return new_activity
+
+        new_active_as = []
+
+
+        clean_dont_process = []
+        for item in dont_process:
+            clean_dont_process.append(clean_text(item))
+        clean_dont_process = set(clean_dont_process)
+
+
         # Open the CSV file for appending the error log
         with open(error_log_filename, mode='a', newline='') as csvfile:
             error_writer = csv.writer(csvfile)
 
             # Process the active_as list
             for a in self.active_as:
-                x = a.function.lower().strip()
+                x = clean_text(a.function)
                 #print(x)
-                try:
-                    # Try to replace the function
-                    a.function = functions_dict[x]
-                    #print(f"replaced with {a.function}")
-                    #print("")
-                except KeyError:
-                    if final_linking:
-                        if a.function.startswith('https://digitaalerfgoed.poolparty.biz/globalise/'):
-                            a.function = a.function
-                            
+
+                if x in clean_dont_process:
+                    #print(f"removing {x} from {self.URI}")
+                    pass
+                else:
+                    try:
+                        # Try to replace the function
+                        disambiguated_uri = functions_dict[x]
+                        new_active_as.append(create_new_activity(a, disambiguated_uri))
+                        #print(f"replaced with {a.function}")
+                        #print("")
+                    except KeyError:
+                        if final_linking:
+                            if a.function.startswith('https://digitaalerfgoed.poolparty.biz/globalise/'):
+                                new_active_as.append(create_new_activity(a, a.function))
+
+                            else:
+                                # If a KeyError occurs, log it to the CSV file
+                                error_writer.writerow([a.function])  # Write the problematic function to a new row
+                                new_active_as.append(create_new_activity(a, '-1'))
                         else:
-                            # If a KeyError occurs, log it to the CSV file
-                            error_writer.writerow([a.function])  # Write the problematic function to a new row
-                            a.function = '-1'  # Set function to '-1'
-                    else:
-                        a.function = a.function
+                            new_active_as.append(create_new_activity(a, a.function))
+
+        self.active_as = new_active_as  # Replace the list after iteration
                     
     def atomize_function_locations(self, a_exceptions=False):
         if len(self.active_as) < 1:
@@ -572,7 +623,7 @@ class Person:
                         self.active_as.remove(act)
 
 
-# In[14]:
+# In[16]:
 
 
 class Personlist:
@@ -598,13 +649,21 @@ class Personlist:
             else:
                 p.atomize_functions()
     
+    def filter_activities_for_all(self, non_allowed_activities: List[str]):
+        """
+        Applies the filter_activities method for each person in the list.
+        :param allowed_activities: List of allowed activities to keep.
+        """
+        for p in self.persons:
+            p.filter_activities(non_allowed_activities)
+    
     def print_all_persons(self):
         for p in self.persons:
             p.printinfo()
     
-    def link_functions_list(self, functions_dict, final_linking_round=True):
+    def link_functions_list(self, functions_dict, dont_process=[], final_linking_round=False):
         for p in self.persons:
-            p.link_functions(functions_dict, final_linking=final_linking_round)
+            p.link_functions(functions_dict, dont_process, final_linking=final_linking_round)
             
     def atomize_function_locations_list(self, use_exceptions=False):
         for p in self.persons:
@@ -921,7 +980,7 @@ class Personlist:
         session.flush()
 
 
-# In[5]:
+# In[17]:
 
 
 def import_linking_list(filename):
