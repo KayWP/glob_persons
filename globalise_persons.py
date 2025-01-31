@@ -533,8 +533,9 @@ class Person:
             
     def atomize_functions(self, a_exceptions=False):
         if not self.active_as:
-            print(f'There is no active as for this person {self.URI}.')
-            return
+            #print(f'There is no active as for this person {self.URI}.')
+            pass
+            
 
         new_active_as = []  # Store new activities separately
         for act in self.active_as:
@@ -877,7 +878,7 @@ class Personlist:
                     new_Status_sql.URI = p.URI
                     new_Status_sql.observation_id = a.observation_id
                     new_Status_sql.original_label = a.original_label
-                    new_Status_sql.status = a.status
+                    new_Status_sql.status = a.stat
                     new_Status_sql.statusType = a.status_type 
                     new_Status_sql.annotationDate = a.annotation
                     new_Status_sql.startDate = a.startdate
