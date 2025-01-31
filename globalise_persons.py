@@ -905,7 +905,7 @@ class Personlist:
                     new_locationRelation_sql.URI = p.URI
                     new_locationRelation_sql.observation_id = a.observation_id
                     new_locationRelation_sql.original_label = a.original_label
-                    new_locationRelation_sql.status = a.status
+                    new_locationRelation_sql.status = a.stat
                     new_locationRelation_sql.statusType = a.status_type 
                     new_locationRelation_sql.annotationDate = a.annotation
                     new_locationRelation_sql.startDate = a.startdate
