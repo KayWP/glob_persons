@@ -931,7 +931,7 @@ class Personlist:
             for p in tqdm(self.persons):
                 for a in p.relationships:
                     new_relation_sql = relation_sql()
-                    new_relation_sql.person = p.URI
+                    new_relation_sql.URI = p.URI
                     new_relation_sql.observation_id = a.observation_id
                     new_relation_sql.original_label = a.original_label
                     new_relation_sql.otherPerson = a.otherPerson
