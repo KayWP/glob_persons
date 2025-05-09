@@ -954,7 +954,7 @@ class Personlist:
             for p in tqdm(self.persons):
                 for a in p.events:
                     new_event_sql = event_sql()
-                    new_event_sql.person = p.URI
+                    new_event_sql.URI = p.URI
                     new_event_sql.observation_id = a.observation_id
                     new_event_sql.original_label = a.original_label
                     new_event_sql.event = a.event
