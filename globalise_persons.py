@@ -906,13 +906,12 @@ class Personlist:
                     new_locationRelation_sql.URI = p.URI
                     new_locationRelation_sql.observation_id = a.observation_id
                     new_locationRelation_sql.original_label = a.original_label
-                    new_locationRelation_sql.status = a.stat
-                    new_locationRelation_sql.statusType = a.status_type 
                     new_locationRelation_sql.annotationDate = a.annotation
                     new_locationRelation_sql.startDate = a.startdate
                     new_locationRelation_sql.endDate = a.enddate
                     new_locationRelation_sql.location = a.location
                     new_locationRelation_sql.source = a.source
+                    new_locationRelation_sql.locationRelation = a.location_relation
                     new_locationRelation_sql.location_in_source = a.page
 
                     session.merge(new_locationRelation_sql)   
