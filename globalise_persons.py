@@ -1,6 +1,15 @@
+# Standard library imports
 from dataclasses import dataclass, field
 from typing import Optional, List
 import copy
+from datetime import datetime  # For vali_date method
+
+# Third-party dependencies
+import pandas as pd  # For to_csv method
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.orm import mapper, sessionmaker
+from sqlalchemy.exc import OperationalError
+from tqdm import tqdm  # For progress bar in update_db method
 
 
 @dataclass
