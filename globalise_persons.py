@@ -5,7 +5,7 @@
 
 
 # Standard library imports
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Optional, List
 import copy
 from datetime import datetime  # For vali_date method
