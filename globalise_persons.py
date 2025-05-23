@@ -52,7 +52,10 @@ class PersonAttribute:
         
         for field_name in date_fields:
             date_value = getattr(self, field_name)
-            if date_value is not None and not self.vali_date(date_value):
+            
+            if date_value == '-1':
+                setattr(self, field_name, None)
+            elif date_value is not None and not self.vali_date(date_value):
                 raise ValueError(
                     f'Field {field_name} with value "{date_value}" is invalid. '
                     'Only a valid date following the ISO 8601 standard can be used. '
@@ -907,7 +910,7 @@ class PersonList:
                     session.merge(new_event_sql)
 
         if makeExternalReferences:
-            external_references_table = metadata.tables['external_references']
+            external_references_table = metadata.tables['externalReferences']
 
             class external_reference_sql(object): pass
 
