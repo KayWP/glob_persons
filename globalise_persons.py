@@ -25,7 +25,6 @@ from tqdm import tqdm  # For progress bar in update_db method
 class PersonAttribute:
     """Base class for observation-related entities."""
     id: Optional[int] = None
-    URI: str = ""
     observation_id: Optional[str] = None
     reconstruction_id: Optional[str] = None
     original_label: Optional[str] = None
@@ -121,7 +120,7 @@ class PersonAttributeLocation(PersonAttribute):
 class Appellation(PersonAttribute):
     """Represents an appellation associated with a person."""
     appellation: Optional[str] = None
-    appellationType: Optional[int] = None
+    appellationType: Optional[str] = None
     toponym: Optional[str] = None
 
 
