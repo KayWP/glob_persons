@@ -342,7 +342,7 @@ class PersonList:
     
     def split_list_values(self, attribute_name: str, field_name: str, separators: List[str], unused_remains: List[str], exceptions: List[str]):
         for p in self.persons:
-            p.split_values(self, attribute_name, field_name, separators, unused_remains, exceptions)
+            p.split_values(attribute_name, field_name, separators, unused_remains, exceptions)
     
     def link_list_values(self, mapping: dict, attribute_name: str, field_name: str, log_file: str = "unmatched_values.txt"):
         """
