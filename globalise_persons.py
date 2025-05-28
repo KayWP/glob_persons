@@ -340,7 +340,7 @@ class PersonList:
         """convert None values to '-1 for CSV export"""
         return '-1' if value is None else value
     
-    def split_list_valuessplit_values(self, attribute_name: str, field_name: str, separators: List[str], unused_remains: List[str], exceptions: List[str]):
+    def split_list_values(self, attribute_name: str, field_name: str, separators: List[str], unused_remains: List[str], exceptions: List[str]):
         for p in self.persons:
             p.link_valuessplit_values(self, attribute_name, field_name, separators, unused_remains, exceptions)
     
