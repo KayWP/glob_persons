@@ -1,4 +1,4 @@
-# Person Data Management System
+# GLOB_Persons
 
 A Python library for managing historical person data with attributes like appellations, activities, identities, and relationships. This system provides a structured way to handle complex biographical information with validation, data processing, and export capabilities.
 
