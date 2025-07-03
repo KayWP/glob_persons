@@ -1,82 +1,256 @@
-# Overview
+# Person Data Management System
 
-The provided code is a Python module that defines classes and functions related to representing and working with person-related data, particularly attributes, appellations, activities, identities, statuses, relationships, and location relations. The module also includes a class for managing a list of persons. It includes a main function that will guide an user through the process of creating a person, then it exports the data to excel in a defined format. However, the code is mainly meant to be used as a package for the processing of large scale person datasets. It will be used by the GLOBALISE Project for the creation of a dataset on the Dutch East India Company.
+A Python library for managing historical person data with attributes like appellations, activities, identities, and relationships. This system provides a structured way to handle complex biographical information with validation, data processing, and export capabilities.
 
-### Function 'vali_date'
-This function validates a date string against three standard date formats which are valid according to the ISO8601 standard: %Y (year), %Y-%m (year-month), and %Y-%m-%d (year-month-day). The function returns True if the date_string is valid according to one of the formats or if the date_string is -1 (used to indicate an unknown date). If the date_string does not match any of the formats, the function returns False.
+## Overview
 
-### Function 'combine_lists'
-This function combines two lists x and y into a new list z and returns the result. If both x and y are non-empty lists, z will be the concatenation of x and y. If one of the lists is empty, z will be the non-empty list, or an empty list if both x and y are empty.
+This library defines a hierarchical data model for representing persons and their various attributes throughout history. It's designed for digital humanities projects, genealogical research, or any application requiring structured biographical data management.
 
-### Class 'person_attribute'
-This class represents a person attribute and serves as a base class for other specific person attributes like appellations, activities, identities, statuses, location relations, and relationships, which inherit its features. It has the following attributes:
+## Features
 
-- **annotation:** A date string representing when the attribute was recorded.
-- **startdate:** A date string representing the start date of the attribute's validity.
-- **enddate:** A date string representing the end date of the attribute's validity.
-- **source:** A string representing the source of the attribute's information.
+- **Structured Data Models**: Comprehensive dataclasses for persons and their attributes
+- **Date Validation**: ISO 8601 compliant date validation with flexible formats
+- **Data Processing**: Value splitting, linking, and transformation utilities
+- **Export Capabilities**: CSV and SQLite database export functionality
+- **Data Integrity**: Automatic lowercasing and validation of input data
 
-All of these values, except the source, can be unknown. The annotation date should as best practice not be unknown either.
+## Installation
 
-### Class 'person_attribute_loc'
-This class is a subclass of Person_attribute and represents a person attribute associated with a location. It adds a location attribute, which is a string representing the location associated with the attribute (which should ideally be an URI).
+### Dependencies
 
-### Class Appellation
-This class is a subclass of Person_attribute and represents an appellation attribute of a person. It adds two attributes:
+```bash
+pip install pandas sqlalchemy tqdm
+```
 
-- **app_str:** A string representing the appellation string.
-- **app_type:** A string representing the appellation type.
+### Standard Library Dependencies
+- `dataclasses`
+- `typing` 
+- `copy`
+- `datetime`
 
-### Class Activity
-This class is a subclass of Person_attribute_loc and represents an activity attribute of a person. It adds three attributes:
+## Data Model
 
-- **function:** A string representing the function performed by the person.
-- **function_type:** A string representing the type of function performed.
-- **employer:** A string representing the employer associated with the activity.
+### Core Classes
 
-Employer is optional.
+#### `PersonAttribute` (Base Class)
+Base class for all person-related observations with common fields:
+- `id`, `observation_id`, `reconstruction_id`
+- Date fields: `annotationDate`, `startDate`, `endDate` (with min/max variants)
+- Source tracking: `observation_source`, `reconstruction_source`
+- Location references and comments
 
-### Class Identity
-This class is a subclass of Person_attribute_loc and represents an identity attribute of a person. It adds two attributes:
+#### `Person`
+Central entity representing an individual with:
+- Basic info: `id`, `URI`, `comment`
+- Collections of related attributes:
+  - `appellations` - names and titles
+  - `active_as` - activities and occupations
+  - `identities` - social/cultural identities
+  - `statuses` - social/legal statuses
+  - `location_relations` - geographic relationships
+  - `relations` - relationships with other persons
+  - `events` - life events
+  - `external_references` - links to other databases
 
-**identifier:** A string representing the identifier associated with the person's identity.
-- **identity_type:** A string representing the type of identity.
+#### Specialized Attribute Classes
+- **`Appellation`**: Names, titles, and appellations
+- **`ActiveAs`**: Professional activities and employment
+- **`Identity`**: Cultural, religious, or social identities
+- **`Status`**: Legal, social, or economic status
+- **`LocationRelation`**: Geographic relationships
+- **`Relation`**: Interpersonal relationships
+- **`Event`**: Life events and occurrences
+- **`ExternalReference`**: Links to external databases
 
-### Class Status
-This class is a subclass of Person_attribute_loc and represents a status attribute of a person. It adds two attributes:
+#### `PersonList`
+Container class for managing collections of `Person` objects with batch operations.
 
-- **stat:** A string representing the status held by the person.
-- **status_type:** A string representing the type of status.
+## Usage Examples
 
-### Class Location_Relation
-This class is a subclass of Person_attribute_loc and represents a location relation attribute of a person. It adds one attribute:
+### Basic Person Creation
 
-- **location_relation:** A string representing the relation a person has to a specific location.
+```python
+from your_module import Person, Appellation, ActiveAs
 
-### Class Relation
-This class is a subclass of Person_attribute and represents a relationship attribute of a person. It adds two attributes:
+# Create a person
+person = Person(
+    URI="https://example.com/person/1",
+    comment="Historical figure from 15th century"
+)
 
-- **relation:** A string representing the relationship between the person and another person.
-- **otherPerson:** A string representing the URI of the other person involved in the relationship.
+# Add an appellation
+appellation = Appellation(
+    appellation="John Smith",
+    appellationType="given name",
+    startDate="1450",
+    endDate="1500"
+)
+person.appellations.append(appellation)
 
-### Class Person
-This class represents a person and contains various attributes, including:
+# Add an activity
+activity = ActiveAs(
+    activity="merchant",
+    activityType="occupation",
+    location="London",
+    startDate="1470",
+    endDate="1495"
+)
+person.active_as.append(activity)
+```
 
-- **URI:** A string representing the unique identifier for the person.
-- **DOB:** A string representing the date of birth of the person.
-- **DOD:** A string representing the date of death of the person.
-- **appellations:** A list of Appellation objects representing the person's appellations.
-- **active_as:** A list of Activity objects representing the person's activities.
-- **identified_as:** A list of Identity objects representing the person's identities.
-- **status:** A list of Status objects representing the person's statuses.
-- **relationships:** A list of Relationship objects representing the person's relationships with other persons.
-- **location_relations:** A list of Location_Relation objects representing the person's relations to locations.
+### Working with PersonList
 
-The class also includes methods for adding relationships to other persons and for merging the attributes of two persons with the same URI through an operator overload on the '+'.
+```python
+from your_module import PersonList
 
-### Class Personlist
-This class represents a list of persons. It contains a list of Person objects and includes methods for merging persons with the same URI and exporting the person data to Excel files. The attributes and methods of this class are as follows:
+# Create a collection
+person_list = PersonList(persons=[person1, person2, person3])
 
-- **persons:** A list of Person objects representing the persons in the list.
-- **merge_on_uri():** A method that merges persons with the same URI in the list, combining their attributes into a single person.
-- **to_excel():** A method that exports the person data to Excel files, with options to create separate sheets for different attributes like appellations, activities, identities, statuses, location relations, and relationships.
+# Export to CSV files
+person_list.to_csv(
+    makeOverview=True,
+    makeAppellations=True,
+    makeActive_as=True
+)
+
+# Link values using a mapping dictionary
+mapping = {
+    "merchant": "https://vocab.example.com/merchant",
+    "london": "https://geonames.org/london"
+}
+person_list.link_list_values(
+    mapping=mapping,
+    attribute_name="active_as",
+    field_name="activity"
+)
+```
+
+### Date Validation
+
+The system automatically validates dates in ISO 8601 format:
+
+```python
+# Valid formats:
+# - "1450" (year only)
+# - "1450-03" (year-month)
+# - "1450-03-15" (full date)
+# - "-1" (unknown date - converted to None)
+
+appellation = Appellation(
+    appellation="Historical Name",
+    startDate="1450-03",  # Valid
+    endDate="invalid-date"  # Raises ValueError
+)
+```
+
+### Data Processing
+
+```python
+# Split composite values
+person.split_values(
+    attribute_name="active_as",
+    field_name="location",
+    separators=[",", ";", " and "],
+    unused_remains=["unknown", ""],
+    exceptions=["London, England"]  # Don't split these
+)
+
+# Link values to URIs
+mapping = import_linking_list("location_mappings.csv")
+person.link_values(
+    mapping=mapping,
+    attribute_name="active_as",
+    field_name="location",
+    log_file="unmatched_locations.txt"
+)
+```
+
+### Database Export
+
+```python
+# Export to SQLite database
+person_list.update_db(
+    db="historical_persons.sqlite",
+    makeOverview=True,
+    makeAppellations=True,
+    makeActive_as=True
+)
+```
+
+## Data Validation
+
+### Automatic Processing
+- All string fields (except `original_label`) are automatically converted to lowercase
+- Date fields are validated against ISO 8601 formats
+- Invalid dates raise `ValueError` with descriptive messages
+
+### Date Formats
+Supported formats:
+- `YYYY` (e.g., "1450")
+- `YYYY-MM` (e.g., "1450-03") 
+- `YYYY-MM-DD` (e.g., "1450-03-15")
+- `"-1"` for unknown dates (converted to `None`)
+
+## Export Formats
+
+### CSV Export
+The `to_csv()` method generates separate CSV files for each attribute type:
+- `overview.csv` - Basic person information
+- `appellations.csv` - Names and titles
+- `activities.csv` - Professional activities
+- `identities.csv` - Social identities
+- `statuses.csv` - Legal/social statuses
+- `locationRelations.csv` - Geographic relationships
+- `relations.csv` - Interpersonal relationships
+- `events.csv` - Life events
+- `external_references.csv` - External database links
+
+### Database Export
+The `update_db()` method exports data to SQLite database tables with the same structure as CSV exports.
+
+## Utility Functions
+
+### `import_linking_list(filename)`
+Imports a CSV file with `original_label` and `URI` columns to create a mapping dictionary for data linking.
+
+```python
+# CSV format:
+# original_label,URI
+# merchant,https://vocab.example.com/merchant
+# london,https://geonames.org/london
+
+mapping = import_linking_list("mappings.csv")
+```
+
+## Error Handling
+
+The system provides detailed error messages for:
+- Invalid date formats
+- Missing required fields
+- Incorrect attribute names
+- Database connection issues
+
+## Best Practices
+
+1. **Date Consistency**: Use ISO 8601 formats consistently
+2. **URI Standards**: Use stable, dereferenceable URIs for person identifiers
+3. **Data Validation**: Validate input data before creating objects
+4. **Batch Processing**: Use `PersonList` for operations on multiple persons
+5. **Source Documentation**: Always populate source and location fields for data provenance
+
+## Contributing
+
+When extending this library:
+- Follow the existing dataclass patterns
+- Add appropriate validation in `__post_init__` methods
+- Update export methods for new fields
+- Maintain backward compatibility
+- Add comprehensive docstrings
+
+## License
+
+[Add your license information here]
+
+## Version History
+
+- Initial version: Comprehensive person data management system with export capabilities
