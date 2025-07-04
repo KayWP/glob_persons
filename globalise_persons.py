@@ -416,7 +416,7 @@ class PersonList:
                                                    'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                    'Toponym', 'Observation source', 'Location in Observation Source', 
                                                    'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
-            appellationsFrame.to_csv('appellations.csv')
+            appellationsFrame.to_csv('appellations.csv', encoding="UTF-8")
 
         if makeActive_as:
             activeAsFrame = []
@@ -451,7 +451,7 @@ class PersonList:
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source', 'Reconstruction Source', 
                                                'Location in Reconstruction Source', 'Comment'])
-            activeAsFrame.to_csv('activities.csv')
+            activeAsFrame.to_csv('activities.csv', encoding="UTF-8")
 
         if makeIdentities:
             identitiesFrame = []
@@ -485,7 +485,7 @@ class PersonList:
                                                  'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                  'Observation source', 'Location in Observation Source',
                                                  'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
-            identitiesFrame.to_csv('identities.csv')
+            identitiesFrame.to_csv('identities.csv', encoding="UTF-8")
 
         if makeStatuses:
             statusesFrame = []
@@ -519,7 +519,7 @@ class PersonList:
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source',
                                                'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
-            statusesFrame.to_csv('statuses.csv')
+            statusesFrame.to_csv('statuses.csv', encoding="UTF-8")
 
         if makeLocation_relations:
             locationRelationFrame = []
@@ -552,7 +552,7 @@ class PersonList:
                                                      'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                      'Observation source', 'Location in Observation Source',
                                                      'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
-            locationRelationFrame.to_csv('locationRelations.csv')
+            locationRelationFrame.to_csv('locationRelations.csv', encoding="UTF-8")
 
         if makeRelations:
             relationsFrame = []
@@ -585,7 +585,7 @@ class PersonList:
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source',
                                                'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])     
-            relationsFrame.to_csv('relations.csv')
+            relationsFrame.to_csv('relations.csv', encoding="UTF-8")
 
         if makeEvents:
             eventsFrame = []
@@ -619,7 +619,7 @@ class PersonList:
                                              'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                              'Observation source', 'Location in Observation Source',
                                              'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
-            eventsFrame.to_csv('events.csv')
+            eventsFrame.to_csv('events.csv', encoding="UTF-8")
 
         if makeExternalReferences:
             externalReferencesFrame = []
@@ -635,7 +635,7 @@ class PersonList:
             externalReferencesFrame = pd.DataFrame(externalReferencesFrame, 
                                                 columns=['URI', 'Reconstruction ID', 'External DB Name', 
                                                         'External ID', 'External ID Type'])
-            externalReferencesFrame.to_csv('external_references.csv')    
+            externalReferencesFrame.to_csv('external_references.csv', encoding="UTF-8")    
         
     def update_db(self, db, makeOverview=True, makeAppellations=True, makeActive_as=True, 
                  makeIdentities=True, makeStatuses=True, makeLocation_relations=True, 
