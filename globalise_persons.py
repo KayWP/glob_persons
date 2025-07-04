@@ -19,7 +19,7 @@ from tqdm import tqdm  # For progress bar in update_db method
 import re
 
 
-# In[2]:
+# In[1]:
 
 
 @dataclass
@@ -86,13 +86,25 @@ class PersonAttribute:
         Validates if a string is a proper date format.
         Accepts:
         - ISO 8601 format: yyyy, yyyy-mm, or yyyy-mm-dd
+        
+        Args:
+            date_string: The string to validate
+            
+        Returns:
+            bool: True if valid, False otherwise
         """
-        if re.fullmatch(r"\d{4}", date_string):
-            return True
-        if re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", date_string):
-            return True
-        if re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])", date_string):
-            return True
+            
+        formats = ["%Y", "%Y-%m", "%Y-%m-%d"]
+        
+        for format_string in formats:
+            try:
+                datetime.strptime(date_string, format_string)
+                return True
+            except ValueError:
+                continue  # Try the next format
+            except TypeError:
+                return False  # date_string is not a string
+        
         return False
 
 
