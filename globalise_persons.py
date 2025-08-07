@@ -319,7 +319,7 @@ class Person:
         if unmatched:
             with open(log_file, "a", encoding="utf-8") as f:
                 for val in unmatched:
-                    f.write("{val}\n")
+                    f.write(f"{val}\n")
 
 
 # In[26]:
