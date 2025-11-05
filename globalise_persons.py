@@ -115,6 +115,7 @@ class PersonAttribute:
 class PersonAttributeLocation(PersonAttribute):
     """Adds location based methods to PersonAttribute"""
     location: Optional[str] = None
+    location_original: Optional[str] = None
 
 
 # In[4]:
@@ -431,6 +432,7 @@ class PersonList:
                         self._format_value(a.activityType),
                         self._format_value(a.employer),
                         self._format_value(a.location),
+                        self._format_value(a.location_original),
                         self._format_value(a.annotationDate),
                         self._format_value(a.startDate),
                         self._format_value(a.endDate),
@@ -446,7 +448,7 @@ class PersonList:
                     ])
             activeAsFrame = pd.DataFrame(activeAsFrame, 
                                        columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                               'Activity', 'ActivityType', 'Employer', 'Location', 
+                                               'Activity', 'ActivityType', 'Employer', 'Location', 'Original_Location_Description',
                                                'AnnotationDate', 'StartDate', 'EndDate',
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source', 'Reconstruction Source', 
@@ -465,6 +467,7 @@ class PersonList:
                         self._format_value(identity.identity),
                         self._format_value(identity.identityType),
                         self._format_value(identity.location),
+                        self._format_value(a.location_original),
                         self._format_value(identity.annotationDate),
                         self._format_value(identity.startDate),
                         self._format_value(identity.endDate),
@@ -480,7 +483,7 @@ class PersonList:
                     ])
             identitiesFrame = pd.DataFrame(identitiesFrame, 
                                          columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                                 'Identity', 'IdentityType', 'Location', 'AnnotationDate', 
+                                                 'Identity', 'IdentityType', 'Location', 'Original_Location_Description', 'AnnotationDate', 
                                                  'StartDate', 'EndDate',
                                                  'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                  'Observation source', 'Location in Observation Source',
@@ -499,6 +502,7 @@ class PersonList:
                         self._format_value(status.status),
                         self._format_value(status.statusType),
                         self._format_value(status.location),
+                        self._format_value(a.location_original),
                         self._format_value(status.annotationDate),
                         self._format_value(status.startDate),
                         self._format_value(status.endDate),
@@ -514,7 +518,7 @@ class PersonList:
                     ])
             statusesFrame = pd.DataFrame(statusesFrame, 
                                        columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                               'Status', 'StatusType', 'Location', 'AnnotationDate', 
+                                               'Status', 'StatusType', 'Location', 'Original_Location_Description', 'AnnotationDate', 
                                                'StartDate', 'EndDate',
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source',
@@ -532,6 +536,7 @@ class PersonList:
                         self._format_value(lr.original_label),
                         self._format_value(lr.locationRelation),
                         self._format_value(lr.location),
+                        self._format_value(a.location_original),
                         self._format_value(lr.annotationDate),
                         self._format_value(lr.startDate),
                         self._format_value(lr.endDate),
@@ -547,7 +552,7 @@ class PersonList:
                     ])
             locationRelationFrame = pd.DataFrame(locationRelationFrame, 
                                               columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                                     'LocationRelation', 'Location', 'AnnotationDate', 
+                                                     'LocationRelation', 'Location', 'Original_Location_Description', 'AnnotationDate', 
                                                      'StartDate', 'EndDate',
                                                      'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                      'Observation source', 'Location in Observation Source',
@@ -599,6 +604,7 @@ class PersonList:
                         self._format_value(e.event),
                         self._format_value(e.argument),
                         self._format_value(e.location),
+                        self._format_value(a.location_original),
                         self._format_value(e.annotationDate),
                         self._format_value(e.startDate),
                         self._format_value(e.endDate),
@@ -614,7 +620,7 @@ class PersonList:
                     ])
             eventsFrame = pd.DataFrame(eventsFrame, 
                                      columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                             'Event', 'Argument', 'Location', 'AnnotationDate', 
+                                             'Event', 'Argument', 'Location', 'Original_Location_Description', 'AnnotationDate', 
                                              'StartDate', 'EndDate',
                                              'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                              'Observation source', 'Location in Observation Source',
@@ -731,6 +737,7 @@ class PersonList:
                     new_activeAs_sql.endDate_min = a.endDate_min
                     new_activeAs_sql.endDate_max = a.endDate_max
                     new_activeAs_sql.location = a.location
+                    new_activeAs_sql.location_original = a.location_original
                     new_activeAs_sql.observation_source = a.observation_source
                     new_activeAs_sql.location_in_observation_source = a.location_in_observation_source
                     new_activeAs_sql.reconstruction_source = a.reconstruction_source
@@ -766,6 +773,7 @@ class PersonList:
                     new_Identity_sql.endDate_min = a.endDate_min
                     new_Identity_sql.endDate_max = a.endDate_max
                     new_Identity_sql.location = a.location
+                    new_Identity_sql.location_original = a.location_original
                     new_Identity_sql.observation_source = a.observation_source
                     new_Identity_sql.location_in_observation_source = a.location_in_observation_source
                     new_Identity_sql.reconstruction_source = a.reconstruction_source
@@ -801,6 +809,7 @@ class PersonList:
                     new_Status_sql.endDate_min = a.endDate_min
                     new_Status_sql.endDate_max = a.endDate_max
                     new_Status_sql.location = a.location
+                    new_Status_sql.location_original = a.location_original
                     new_Status_sql.observation_source = a.observation_source
                     new_Status_sql.location_in_observation_source = a.location_in_observation_source
                     new_Status_sql.reconstruction_source = a.reconstruction_source
@@ -834,6 +843,7 @@ class PersonList:
                     new_locationRelation_sql.endDate_min = a.endDate_min
                     new_locationRelation_sql.endDate_max = a.endDate_max
                     new_locationRelation_sql.location = a.location
+                    new_locationRelation_sql.location_original = a.location_original
                     new_locationRelation_sql.observation_source = a.observation_source
                     new_locationRelation_sql.locationRelation = a.locationRelation
                     new_locationRelation_sql.location_in_observation_source = a.location_in_observation_source
@@ -902,6 +912,7 @@ class PersonList:
                     new_event_sql.endDate_min = a.endDate_min
                     new_event_sql.endDate_max = a.endDate_max
                     new_event_sql.location = a.location
+                    new_event_sql.location_original = a.location_original
                     new_event_sql.observation_source = a.observation_source
                     new_event_sql.location_in_observation_source = a.location_in_observation_source
                     new_event_sql.reconstruction_source = a.reconstruction_source
