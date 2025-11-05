@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "activeAs" (
     "activityType" TEXT,
     "employer" TEXT,
     "location" TEXT,
+    "original_location_description" TEXT,
     "annotationDate" TEXT,
     "startDate" TEXT,
     "endDate" TEXT,
@@ -67,6 +68,7 @@ CREATE TABLE IF NOT EXISTS "identities" (
         "identity" TEXT,
         "identityType" TEXT,
         "location" TEXT,
+        "original_location_description" TEXT,
         "annotationDate" TEXT,
         "startDate" TEXT,
         "endDate" TEXT,
@@ -93,6 +95,7 @@ CREATE TABLE IF NOT EXISTS "statuses" (
         "status" TEXT,
         "statusType" TEXT,
         "location" TEXT,
+        "original_location_description" TEXT,
         "annotationDate" TEXT,
         "startDate" TEXT,
         "endDate" TEXT,
@@ -118,6 +121,7 @@ CREATE TABLE IF NOT EXISTS "locationRelations" (
         "original_label" TEXT,
         "locationRelation" TEXT,
         "location" TEXT,
+        "original_location_description" TEXT,
         "annotationDate" TEXT,
         "startDate" TEXT,
         "endDate" TEXT,
@@ -169,6 +173,7 @@ CREATE TABLE IF NOT EXISTS "events" (
     "event" TEXT,
     "argument" TEXT,
     "location" TEXT,
+    "original_location_description" TEXT,
     "annotationDate" TEXT,
     "startDate" TEXT,
     "endDate" TEXT,
@@ -201,15 +206,15 @@ CREATE TABLE IF NOT EXISTS "reconstructionSources" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "Zotero_URI" TEXT,
     "geographical_scope" TEXT,
-    "temporal_scope_start",
-    "temporal_scope_end",
+    "temporal_scope_start" TEXT,
+    "temporal_scope_end" TEXT,
     "creation_period_start" TEXT,
     "creation_period_end" TEXT,
     "external_id_type" TEXT,
     "comment" TEXT
 );
 
-CREATE VIEW activeAs_with_ranges AS
+CREATE VIEW IF NOT EXISTS activeAs_with_ranges AS
 SELECT
     id,
     URI,
@@ -220,6 +225,7 @@ SELECT
     activityType,
     employer,
     location,
+    original_location_description,
     annotationDate,
     observation_source,
     location_in_observation_source,
@@ -230,7 +236,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM activeAs;
 
-CREATE VIEW appellations_with_ranges AS
+CREATE VIEW IF NOT EXISTS appellations_with_ranges AS
 SELECT
     id,
     URI,
@@ -239,7 +245,7 @@ SELECT
     appellation,
     appellationType,
     annotationDate,
-    location,
+    toponym,
     observation_source,
     location_in_observation_source,
     reconstruction_source,
@@ -249,7 +255,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM appellations;
 
-CREATE VIEW identities_with_ranges AS
+CREATE VIEW IF NOT EXISTS identities_with_ranges AS
 SELECT
     id,
     URI,
@@ -259,6 +265,7 @@ SELECT
     identity,
     identityType,
     location,
+    original_location_description,
     annotationDate,
     observation_source,
     location_in_observation_source,
@@ -269,7 +276,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM identities;
 
-CREATE VIEW statuses_with_ranges AS
+CREATE VIEW IF NOT EXISTS statuses_with_ranges AS
 SELECT
     id,
     URI,
@@ -279,6 +286,7 @@ SELECT
     status,
     statusType,
     location,
+    original_location_description,
     annotationDate,
     observation_source,
     location_in_observation_source,
@@ -289,7 +297,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM statuses;
 
-CREATE VIEW locationRelations_with_ranges AS
+CREATE VIEW IF NOT EXISTS locationRelations_with_ranges AS
 SELECT
     id,
     URI,
@@ -298,6 +306,7 @@ SELECT
     original_label,
     locationRelation,
     location,
+    original_location_description,
     annotationDate,
     observation_source,
     location_in_observation_source,
@@ -308,7 +317,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM locationRelations;
 
-CREATE VIEW relations_with_ranges AS
+CREATE VIEW IF NOT EXISTS relations_with_ranges AS
 SELECT
     id,
     URI,
@@ -327,7 +336,7 @@ SELECT
     COALESCE(endDate, endDate_max) AS effectiveEndDate
 FROM relations;
 
-CREATE VIEW events_with_ranges AS
+CREATE VIEW IF NOT EXISTS events_with_ranges AS
 SELECT
     id,
     URI,
@@ -336,6 +345,8 @@ SELECT
     original_label,
     event,
     argument,
+    location,
+    original_location_description,
     annotationDate,
     observation_source,
     location_in_observation_source,
