@@ -127,6 +127,7 @@ class Appellation(PersonAttribute):
     appellation: Optional[str] = None
     appellationType: Optional[str] = None
     toponym: Optional[str] = None
+    toponym_location: Optional[str] = None
 
 
 # In[5]:
@@ -138,6 +139,7 @@ class ActiveAs(PersonAttributeLocation):
     activity: Optional[str] = None
     activityType: Optional[str] = None
     employer: Optional[str] = None
+    employer_organization: Optional[str] = None
 
 
 # In[6]:
@@ -211,6 +213,7 @@ class Person:
     """Represents a person entity."""
     id: Optional[int] = None
     URI: str = ""
+    rdfs_label = None
     comment: Optional[str] = None
     
     # Relationships (populated after initialization)
@@ -383,8 +386,8 @@ class PersonList:
             overviewFrame = []
 
             for p in self.persons:
-                overviewFrame.append([p.URI, self._format_value(p.comment)])
-            overviewFrame = pd.DataFrame(overviewFrame, columns=['URI', 'Comment'])
+                overviewFrame.append([p.URI, p.rdfs_label, self._format_value(p.comment)])
+            overviewFrame = pd.DataFrame(overviewFrame, columns=['URI', 'rdfs:label', 'Comment'])
             overviewFrame.to_csv('overview.csv')
 
         if makeAppellations:
@@ -405,6 +408,7 @@ class PersonList:
                         self._format_value(a.endDate_min),
                         self._format_value(a.endDate_max),
                         self._format_value(a.toponym),
+                        self._format_value(a.toponym_location),
                         self._format_value(a.observation_source),
                         self._format_value(a.location_in_observation_source),
                         self._format_value(a.reconstruction_source),
@@ -415,7 +419,7 @@ class PersonList:
                                            columns=['URI', 'Observation', 'Reconstruction', 'Appellation', 
                                                    'AppellationType', 'AnnotationDate', 'StartDate', 'EndDate',
                                                    'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
-                                                   'Toponym', 'Observation source', 'Location in Observation Source', 
+                                                   'Toponym', 'Toponym_Location', 'Observation source', 'Location in Observation Source', 
                                                    'Reconstruction Source', 'Location in Reconstruction Source', 'Comment'])
             appellationsFrame.to_csv('appellations.csv', encoding="UTF-8")
 
@@ -431,6 +435,7 @@ class PersonList:
                         self._format_value(a.activity),
                         self._format_value(a.activityType),
                         self._format_value(a.employer),
+                        self._format_value(a.employer_organization),
                         self._format_value(a.location),
                         self._format_value(a.location_original),
                         self._format_value(a.annotationDate),
@@ -448,7 +453,7 @@ class PersonList:
                     ])
             activeAsFrame = pd.DataFrame(activeAsFrame, 
                                        columns=['URI', 'Observation', 'Reconstruction', 'Original Label', 
-                                               'Activity', 'ActivityType', 'Employer', 'Location', 'Original_Location_Description',
+                                               'Activity', 'ActivityType', 'Employer', 'Employer_Organization', 'Location', 'Original_Location_Description',
                                                'AnnotationDate', 'StartDate', 'EndDate',
                                                'StartDate_Min', 'StartDate_Max', 'EndDate_Min', 'EndDate_Max',
                                                'Observation source', 'Location in Observation Source', 'Reconstruction Source', 
@@ -672,6 +677,7 @@ class PersonList:
             for p in tqdm(self.persons):
                 new_overview_sql = Overview_sql()
                 new_overview_sql.URI = p.URI
+                new_overview_sql.rdfs_label = p.rdfs_label
                 new_overview_sql.comment = p.comment
                 session.merge(new_overview_sql)
 
@@ -701,6 +707,7 @@ class PersonList:
                     new_appellation_sql.endDate_min = a.endDate_min
                     new_appellation_sql.endDate_max = a.endDate_max
                     new_appellation_sql.toponym = a.toponym
+                    new_appellation_sql.toponym_location = a.toponym_location
                     new_appellation_sql.observation_source = a.observation_source
                     new_appellation_sql.location_in_observation_source = a.location_in_observation_source
                     new_appellation_sql.reconstruction_source = a.reconstruction_source
@@ -729,6 +736,7 @@ class PersonList:
                     new_activeAs_sql.activity = a.activity
                     new_activeAs_sql.activityType = a.activityType
                     new_activeAs_sql.employer = a.employer
+                    new_activeAs_sql.employer_organization = a.employer_organization
                     new_activeAs_sql.annotationDate = a.annotationDate
                     new_activeAs_sql.startDate = a.startDate
                     new_activeAs_sql.endDate = a.endDate
