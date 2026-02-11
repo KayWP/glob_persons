@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS "persons" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "URI" TEXT,
+    "rdfs:label" TEXT,
     "comment" TEXT
 );
 
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "activeAs" (
     "activity" TEXT,
     "activityType" TEXT,
     "employer" TEXT,
+    "employing_organisation_id",
     "location" TEXT,
     "original_location_description" TEXT,
     "annotationDate" TEXT,
@@ -49,6 +51,7 @@ CREATE TABLE IF NOT EXISTS "appellations" (
     "endDate_min" TEXT,
     "endDate_max" TEXT,
     "toponym" TEXT,
+    "toponym_identifier" TEXT,
     "observation_source" TEXT,
     "location_in_observation_source" TEXT,
     "reconstruction_source" TEXT,
