@@ -609,7 +609,7 @@ class PersonList:
                         self._format_value(e.event),
                         self._format_value(e.argument),
                         self._format_value(e.location),
-                        self._format_value(a.location_original),
+                        self._format_value(e.location_original),
                         self._format_value(e.annotationDate),
                         self._format_value(e.startDate),
                         self._format_value(e.endDate),
